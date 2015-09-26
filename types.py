@@ -23,6 +23,18 @@ class Enum:
     def __init__(self,c,fname,qualification=""):
         self.name=c.spelling
         self.qualification=qualification
+        self.values=[]
+        self.hidden=False;
+        if is_hidden(c):
+            self.hidden=True
+        self.values=translate(c,fname,qualification+self.name+"::")
+
+    def generate(self):
+        result=[]
+        result.append('enum_<%s%s>("%s")\n'%(self.qualification,self.name,self.name ))
+        for value in self.values:
+            result.append('.value("%s",\t%s%s)\n'%(value,self.qualification,value))
+        return result
 
 class Variable:
     def __init__(self,c,fname,qualification=""):
@@ -62,7 +74,7 @@ class Class:
             
         for member in self.enums:
             result.extend(member.generate())
-            result.append(";\n")
+
 
         result.append('class_<%s>("%s",no_init)\n'%(self.qualification+self.name,self.name))
         for member in self.functions:
@@ -93,6 +105,12 @@ def is_exported(node):
 def is_class(node):
     return  node.kind == clang.cindex.CursorKind.CLASS_DECL           
 
+def is_enum(node):
+    return  node.kind == clang.cindex.CursorKind.ENUM_DECL
+
+def is_enum_constant(node):
+    return  node.kind == clang.cindex.CursorKind.ENUM_CONSTANT_DECL
+
 def is_public_function(node):
     return  node.kind == clang.cindex.CursorKind.CXX_METHOD and node.access_specifier == clang.cindex.AccessSpecifier.PUBLIC
 
@@ -107,6 +125,10 @@ def translate(cursor,fname,qualification=""):
             result.append(Class(c,fname,qualification))
         elif is_public_function(c):
             result.append(Function(c,fname,qualification))
+        elif is_enum(c):
+            result.append(Enum(c,fname,qualification))            
+        elif is_enum_constant(c):
+            result.append(c.spelling)
 
     return result
 
@@ -117,9 +139,6 @@ def node_children(node):
 if len(sys.argv) != 2:
     print("Usage: translator.py [header file name]")
     sys.exit()
-
-#print clang.cindex.CursorKind.get_all_kinds()
-#sys.exit()    
 
 clang.cindex.Config.set_library_file('/usr/lib/llvm-3.5/lib/libclang.so')
 index = clang.cindex.Index.create()
