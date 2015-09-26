@@ -3,6 +3,27 @@ import clang.cindex
 import asciitree # must be version 0.2
 import sys
 
+
+def translate(cursor,fname,qualification=""):
+    global exported
+    global hidden
+    result = []
+    for c in cursor.get_children():
+        if not c.location.file.name == fname:
+            continue
+        if (is_class(c)):
+            result.append(Class(c,fname,qualification))
+        elif is_public_function(c):
+            result.append(Function(c,fname,qualification))
+        elif is_enum(c):
+            result.append(Enum(c,fname,qualification))
+        elif is_enum_constant(c):
+            result.append(c.spelling)
+            
+    return result
+
+
+
 class Function:
     def __init__(self,c,fname,qualification=""):
         self.name=c.spelling

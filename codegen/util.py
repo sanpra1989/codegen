@@ -25,24 +25,6 @@ def is_enum_constant(node):
 def is_public_function(node):
     return  node.kind == clang.cindex.CursorKind.CXX_METHOD and node.access_specifier == clang.cindex.AccessSpecifier.PUBLIC
 
-def translate(cursor,fname,qualification=""):
-    global exported
-    global hidden
-    result = []
-    for c in cursor.get_children():
-        if not c.location.file.name == fname:
-            continue
-        if (is_class(c)):
-            result.append(Class(c,fname,qualification))
-        elif is_public_function(c):
-            result.append(Function(c,fname,qualification))
-        elif is_enum(c):
-            result.append(Enum(c,fname,qualification))
-        elif is_enum_constant(c):
-            result.append(c.spelling)
-
-    return result
-
 def node_children(node):
     return [c for c in node.get_children() if c.location.file.name == sys.argv[1]]
 
