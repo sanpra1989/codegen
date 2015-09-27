@@ -1,4 +1,3 @@
-#!/usr/bin/python
 import clang.cindex
 import asciitree # must be version 0.2
 import sys
@@ -15,7 +14,7 @@ class Function:
         result=[]
         if self.hidden:
             return result
-            
+
         result.append('.def("%s",\t &%s)\n'%(self.name,self.qualification+self.name))
         return result
 
@@ -42,7 +41,7 @@ class Class:
         self.exported=False
         if is_exported(c):
             self.exported=True
-        
+
         for member in members:
             if isinstance(member,Class):
                 self.member_classes.append(member)
@@ -53,13 +52,13 @@ class Class:
             elif isinstance(member,Variable):
                 self.member_vars.append(member)
 
-    
+
     def generate(self):
-    
+
         result=[]
         if not self.exported:
             return result
-            
+
         for member in self.enums:
             result.extend(member.generate())
             result.append(";\n")
@@ -75,7 +74,7 @@ class Class:
         result.append(";\n")
 
         return result
-          
+
 def print_node(node):
     text = node.spelling or node.displayname
     kind = str(node.kind)[str(node.kind).index('.')+1:]
@@ -89,9 +88,9 @@ def is_hidden(node):
 def is_exported(node):
     return "py_exported" in [c.displayname for c in node.get_children()
             if c.kind == clang.cindex.CursorKind.ANNOTATE_ATTR]
-            
+
 def is_class(node):
-    return  node.kind == clang.cindex.CursorKind.CLASS_DECL           
+    return  node.kind == clang.cindex.CursorKind.CLASS_DECL
 
 def is_public_function(node):
     return  node.kind == clang.cindex.CursorKind.CXX_METHOD and node.access_specifier == clang.cindex.AccessSpecifier.PUBLIC
@@ -119,7 +118,7 @@ if len(sys.argv) != 2:
     sys.exit()
 
 #print clang.cindex.CursorKind.get_all_kinds()
-#sys.exit()    
+#sys.exit()
 
 clang.cindex.Config.set_library_file('/usr/lib/llvm-3.5/lib/libclang.so')
 index = clang.cindex.Index.create()
@@ -129,6 +128,6 @@ translated = translate(translation_unit.cursor,sys.argv[1])
 for cls in translated:
     for line in cls.generate():
         print line
-    
+
 #print(asciitree.draw_tree(translation_unit.cursor, node_children, print_node))
 
